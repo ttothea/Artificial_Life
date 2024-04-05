@@ -13,8 +13,6 @@ import datetime
 
 from screen_output import ScreenController
 
-from pynput.keyboard import KeyCode, Listener
-
 from collections import deque
 
 from pixel_composer.rasterizer import ScreenDrawer, FrameBuffer, FullScreenPatternShader, PerPixelLightingShader, \
@@ -1197,6 +1195,7 @@ def on_press(key):
     :param key:
     :return:
     """
+    from pynput.keyboard import KeyCode
     if key == KeyCode(char='T'):
         thanos_snap()
     if key == KeyCode(char='G'):
@@ -1584,7 +1583,9 @@ if __name__ == '__main__':
     parser.add_argument('-ff', '--fixed-function', action="store_true", dest="fixed_function", default=fixed_function,
                         help='Whether to bypass pixel composer and use fixed function '
                              'for drawing (faster, less pretty)')
-
+    parser.add_argument('-hl', '--headless', action="store_true", dest="headless",
+                        default=headless,
+                        help='Whether to run in headless mode (without a keyboard listener)')
     args = parser.parse_args()
 
     logging.basicConfig(level=args.log_level)
@@ -1618,9 +1619,11 @@ if __name__ == '__main__':
 
     current_session.rendering_on = True
 
-    listener = Listener(on_press=on_press, daemon=True)
-    listener.start()
-
+    if not args.headless:
+        from pynput.keyboard import Listener
+        listener = Listener(on_press=on_press, daemon=True)
+        listener.start()  
+          
     Thread(target=main, daemon=True).start()
 
     if not args.fixed_function:
